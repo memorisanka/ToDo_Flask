@@ -12,5 +12,5 @@ print(response2.content)
 response3 = requests.delete('http://127.0.0.1:5000/api/tasks/2')
 print(response3.content)
 
-response4 = requests.put('http://127.0.0.1:5000/api/tasks', json={'id': 1, 'task': 'Updated task details'})
+response4 = requests.put('http://127.0.0.1:5000/api/tasks', json={'id': 1, 'task': 'Updated task.'})
 print(response4.content)

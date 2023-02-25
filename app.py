@@ -13,9 +13,9 @@ def connect_to_db():
 def create_db_table():
     conn = connect_to_db()
     try:
-        conn.execute('''CREATE TABLE tasks (
-        id INTEGER PRIMARY KEY, 
-        task TEXT);''')
+        conn.execute('CREATE TABLE IF NOT EXISTS tasks (\n'
+                     '        id INTEGER PRIMARY KEY, \n'
+                     '        task TEXT);')
         conn.commit()
         print('Tasks table created successfully.')
     except sqlite3.OperationalError:
