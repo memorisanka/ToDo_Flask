@@ -103,8 +103,8 @@ def update_task(task):
 
 def delete_task(task_id):
     message = {}
+    conn = connect_to_db()
     try:
-        conn = connect_to_db()
         conn.execute("DELETE from tasks WHERE id = ?",
                      (task_id,))
         conn.commit()
