@@ -1,6 +1,6 @@
 import sqlite3
 
-from flask import Flask, jsonify, request
+from flask import Flask, request
 
 app = Flask(__name__)
 
@@ -11,14 +11,14 @@ def connect_to_db():
 
 
 def create_db_table():
+    conn = connect_to_db()
     try:
-        conn = connect_to_db()
         conn.execute('''CREATE TABLE tasks (
-        id int PRIMARY KEY NOT NULL,
-        task text NOT NULL);''')
+        id INTEGER PRIMARY KEY, 
+        task TEXT);''')
         conn.commit()
         print('Tasks table created successfully.')
-    except:
+    except sqlite3.OperationalError:
         print('There is a problem with creating Tasks table!')
     finally:
         conn.close()
@@ -26,14 +26,15 @@ def create_db_table():
 
 def add_task(task):
     task_to_add = {}
+    conn = connect_to_db()
     try:
-        conn = connect_to_db()
         cur = conn.cursor()
-        cur.execute("INSERT INTO tasks (task) VALUES (?)", (task['task'],))
+        cur.execute("INSERT INTO tasks (task) VALUES (?) RETURNING id", (task["task"],))
+        new_task_id = cur.fetchone()[0]
         conn.commit()
-        task_to_add = get_task_by_id(cur.lastrowid)
+        task_to_add = get_task_by_id(new_task_id)
 
-    except:
+    except sqlite3.OperationalError:
         conn.rollback()
 
     finally:
@@ -44,8 +45,8 @@ def add_task(task):
 
 def get_task_by_id(task_id):
     task = {}
+    conn = connect_to_db()
     try:
-        conn = connect_to_db()
         conn.row_factory = sqlite3.Row
         cur = conn.cursor()
         cur.execute('SELECT * FROM tasks WHERE id= ?', (task_id,))
@@ -54,16 +55,16 @@ def get_task_by_id(task_id):
         task["id"] = row["id"]
         task["task"] = row["task"]
 
-    except:
+    except sqlite3.OperationalError:
         task = {}
 
-    return jsonify(task)
+    return task
 
 
 def get_tasks():
     tasks = []
+    conn = connect_to_db()
     try:
-        conn = connect_to_db()
         conn.row_factory = sqlite3.Row
         cur = conn.cursor()
         cur.execute("SELECT * FROM tasks")
@@ -74,7 +75,7 @@ def get_tasks():
 
             tasks.append(task)
 
-    except:
+    except sqlite3.OperationalError:
         tasks = []
 
     return tasks
@@ -82,8 +83,8 @@ def get_tasks():
 
 def update_task(task):
     updated_task = {}
+    conn = connect_to_db()
     try:
-        conn = connect_to_db()
         cur = conn.cursor()
         cur.execute("UPDATE tasks SET task = ? WHERE id =?",
                     (task["task"], task["id"],))
@@ -91,7 +92,7 @@ def update_task(task):
 
         updated_task = get_task_by_id(task["id"])
 
-    except:
+    except sqlite3.OperationalError:
         conn.rollback()
         updated_task = {}
     finally:
@@ -108,7 +109,7 @@ def delete_task(task_id):
                      (task_id,))
         conn.commit()
         message["status"] = "Task deleted successfully"
-    except:
+    except sqlite3.OperationalError:
         conn.rollback()
         message["status"] = "Cannot delete task"
     finally:
@@ -119,30 +120,31 @@ def delete_task(task_id):
 
 @app.route('/api/tasks', methods=['GET'])
 def api_get_tasks():
-    return jsonify(get_tasks())
+    return get_tasks()
 
 
 @app.route('/api/tasks/<task_id>', methods=['GET'])
 def api_get_task(task_id):
-    return jsonify(get_task_by_id(task_id))
+    return get_task_by_id(task_id)
 
 
-@app.route('/api/tasks/add', methods=['POST'])
+@app.route('/api/tasks', methods=['POST'])
 def api_add_task():
     task = request.get_json()
-    return jsonify(add_task(task))
+    return add_task(task)
 
 
-@app.route('/api/tasks/update', methods=['PUT'])
+@app.route('/api/tasks', methods=['PUT'])
 def api_update_task():
     task = request.get_json()
-    return jsonify(update_task(task))
+    return update_task(task)
 
 
-@app.route('/api/tasks/delete/<task_id>', methods=['DELETE'])
+@app.route('/api/tasks/<task_id>', methods=['DELETE'])
 def api_delete_user(task_id):
-    return jsonify(delete_task(task_id))
+    return delete_task(task_id)
 
 
 if __name__ == '__main__':
+    create_db_table()
     app.run(debug=True)

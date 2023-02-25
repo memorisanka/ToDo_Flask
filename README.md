@@ -31,6 +31,6 @@ The app provides the following API endpoints:
 
 GET /api/tasks: Returns a list of all tasks.
 GET /api/tasks/<task_id>: Returns details of a specific task.
-POST /api/tasks/add: Creates a new task.
-PUT /api/tasks/update: Updates an existing task.
-DELETE /api/tasks/delete/<task_id>: Deletes a specific task.
+POST /api/tasks: Creates a new task.
+PUT /api/tasks: Updates an existing task.
+DELETE /api/tasks/<task_id>: Deletes a specific task.
